@@ -22,7 +22,7 @@ def print_instructions():
 def get_client_request():
     request = re.sub(' +', ' ', input("Please enter command: "))
     cmd = request.split(' ')[0].upper()
-    cmd += ' ' + ''.join(request.split(' ')[1:])
+    cmd += ' ' + ' '.join(request.split(' ')[1:])
 
     return cmd.strip()
 

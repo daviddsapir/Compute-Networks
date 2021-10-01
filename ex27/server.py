@@ -88,8 +88,8 @@ def handle_client_request(command: str, params: list):
         os.remove(path)
         response = 'Removed - ' + path
     if command == 'COPY':
-        shutil.copy(params[1], params[2])
-
+        shutil.copy(params[0], params[1])
+        response = f'Copied {params[0]} to {params[1]}'
     return response
 
 

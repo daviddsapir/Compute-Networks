@@ -5,12 +5,26 @@
 
 import socket
 import protocol
+import re
 
 # IP adder to connect to.
 IP = '127.0.0.1'
 
 # The path + filename where the copy of the screenshot at the client should be saved
 SAVED_PHOTO_LOCATION = './client_photos' 
+
+
+def print_instructions():
+    print('Welcome to remote computer application. Available commands are:\n')
+    print('TAKE_SCREENSHOT\nSEND_PHOTO\nDIR\nDELETE\nCOPY\nEXECUTE\nEXIT')
+
+
+def get_client_request():
+    request = re.sub(' +', ' ', input("Please enter command: "))
+    cmd = request.split(' ')[0].upper()
+    cmd += ' ' + ''.join(request.split(' ')[1:])
+
+    return cmd.strip()
 
 
 def handle_server_response(my_socket, cmd: str):
@@ -24,21 +38,17 @@ def handle_server_response(my_socket, cmd: str):
     if cmd == 'DIR' or cmd == 'DELETE' or cmd == 'COPY':
         print(server_response)
 
-    # (10) treat SEND_PHOTO
-
 
 def main():
     # open socket with the server
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     my_socket.connect((IP, protocol.PORT))
 
-    # print instructions
-    print('Welcome to remote computer application. Available commands are:\n')
-    print('TAKE_SCREENSHOT\nSEND_PHOTO\nDIR\nDELETE\nCOPY\nEXECUTE\nEXIT')
+    print_instructions()
 
     # loop until user requested to exit
     while True:
-        cmd = input("Please enter command: ").upper()
+        cmd = get_client_request()
         if protocol.check_cmd(cmd):
             packet = protocol.create_msg(cmd)
             my_socket.send(packet)

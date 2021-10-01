@@ -1,6 +1,7 @@
-from ast import Param
+
 import socket
 import protocol
+import shutil
 import os
 from glob import glob
 
@@ -8,14 +9,15 @@ from glob import glob
 IP = '127.0.0.1'
 
 # The path + filename where the screenshot at the server should be saved
-PHOTO_PATH = 'server_photos'  
+PHOTO_PATH = 'server_photos'
+
+
+def check_if_file_exist(path: str):
+    return os.path.isfile(path)
 
 
 def check_if_dir_exist(path: str):
-    if path != '' and os.path.isdir(path):
-        return True
-
-    return False
+    return os.path.isdir(path)
 
 
 def check_client_request(request: str):
@@ -37,13 +39,26 @@ def check_client_request(request: str):
     if protocol.check_cmd(request):
         request = request.split(' ')
         cmd = request[0]
+
         if cmd == 'EXIT':
             params.append(None)
         if cmd == 'DIR':
             if check_if_dir_exist(request[1]):
                 params.append(request[1])
             else:
-                return False, None, None
+                return False
+        if cmd == 'DELETE':
+            if check_if_file_exist(request[1]):
+                params.append(request[1])
+            else:
+                return False
+        if cmd == 'COPY':
+            if check_if_file_exist(request[1]) and\
+                    check_if_file_exist(request[2]):
+                params.append(request[1])
+                params.append(request[2])
+            else:
+                return False
 
     # Then make sure the params are valid
 
@@ -68,6 +83,12 @@ def handle_client_request(command: str, params: list):
         if path[-1] != '/':
             path += '/'
         response = '\n'.join(glob(path + '*')) + '\n'
+    if command == 'DELETE':
+        path = params[0]
+        os.remove(path)
+        response = 'Removed - ' + path
+    if command == 'COPY':
+        shutil.copy(params[1], params[2])
 
     return response
 

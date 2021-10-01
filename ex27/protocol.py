@@ -20,9 +20,12 @@ def check_cmd(cmd: str):
 
     cmd = cmd.split(' ')
     command = cmd[0]
+
     if command not in commands_list:
         return False
-    elif command == 'DIR' and len(cmd) != 2:
+    elif (command == 'DIR' or command == 'DELETE' or command == 'EXECUTE') and len(cmd) != 2:
+        return False
+    elif command == 'COPY' and len(cmd) != 3:
         return False
 
     return True
@@ -48,4 +51,3 @@ def get_msg(my_socket):
         return True, message
     else:
         return False, "Error"
-

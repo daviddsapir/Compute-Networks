@@ -6,7 +6,8 @@ import os
 from glob import glob
 import subprocess
 import pyautogui
-from PIL import Image
+from math import floor
+
 
 # IP adder to connect to.
 IP = '127.0.0.1'
@@ -15,13 +16,27 @@ IP = '127.0.0.1'
 PHOTO_PATH = 'server_photos'
 
 
-def check_if_file_exist(path: str):
+def get_image_digit_len(num):
+    count = 0
+    while num / 10 != 0:
+        num = floor(num / 10)
+        count += 1
+
+    return count
+
+
+def is_file_exist(path: str):
     return os.path.isfile(path)
 
 
 def check_if_dir_exist(path: str):
     return os.path.isdir(path)
 
+
+def send_screenshot_to_client(client_socket, response):
+    client_socket.send(f'{str(get_image_digit_len(len(response))).zfill(protocol.LENGTH_FIELD_SIZE)}'.encode())
+    client_socket.send(f'{str(len(response))}'.encode())
+    client_socket.send(response)
 
 def check_client_request(request: str):
     """
@@ -49,13 +64,13 @@ def check_client_request(request: str):
             else:
                 return False
         if cmd == 'DELETE':
-            if check_if_file_exist(request[1]):
+            if is_file_exist(request[1]):
                 params.append(request[1])
             else:
                 return False
         if cmd == 'COPY':
-            if check_if_file_exist(request[1]) and\
-                    check_if_file_exist(request[2]):
+            if is_file_exist(request[1]) and\
+                    is_file_exist(request[2]):
                 params.append(request[1])
                 params.append(request[2])
             else:
@@ -102,13 +117,15 @@ def handle_client_request(command: str, params: list):
             response = 'Took screenshot'
         except:
             response = 'Cannot take photo'
-
+    if command == 'SEND_PHOTO':
+        if is_file_exist('./server_photos/screen_shot.png'):
+            screen_shot = open('./server_photos/screen_shot.png', 'rb')
+            response = screen_shot.read()
 
     return response
 
 
-def main():
-    # open socket with client
+def main() :   # open socket with client
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((IP, protocol.PORT))
 
@@ -130,16 +147,16 @@ def main():
             valid_cmd, command, params = check_client_request(cmd)
 
             if valid_cmd:
-
+                
                 if command == 'EXIT':
                     break
 
-                elif command == 'SEND_FILE':
-                    pass
-                else:
-                    # prepare a response using "handle_client_request"
-                    response = handle_client_request(command, params)
+                # prepare a response using "handle_client_request"
+                response = handle_client_request(command, params)
 
+                if command == 'SEND_PHOTO':
+                    send_screenshot_to_client(client_socket, response)
+                else:
                     # add length field using "create_msg"
                     packet = protocol.create_msg(response)
 

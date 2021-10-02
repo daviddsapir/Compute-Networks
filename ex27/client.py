@@ -15,11 +15,13 @@ SAVED_PHOTO_LOCATION = './client_photos'
 
 
 def print_instructions():
+    ''' Print instractions to the client '''
     print('Welcome to remote computer application. Available commands are:\n')
     print('TAKE_SCREENSHOT\nSEND_PHOTO\nDIR\nDELETE\nCOPY\nEXECUTE\nEXIT')
 
 
 def get_client_request():
+    ''' Returns the client request '''
     request = re.sub(' +', ' ', input("Please enter command: "))
     cmd = request.split(' ')[0].upper()
     cmd += ' ' + ' '.join(request.split(' ')[1:])
@@ -27,8 +29,24 @@ def get_client_request():
     return cmd.strip()
 
 
-def handle_send_photo():
-    pass
+def handle_send_photo(my_socket):
+    length_field_size = my_socket.recv(protocol.LENGTH_FIELD_SIZE).decode()
+    if (length_field_size.isnumeric()):
+        length = int(length_field_size)
+        length_field = my_socket.recv(length).decode()
+    else:
+        print('Error')
+
+    if str(length_field).isnumeric():
+        length_field = int(length_field)
+        screen_shot = open("./client_photos/screenshot.png", "wb")
+        receved = 0
+        while receved < length_field:
+            screen_shot.write(my_socket.recv(1024))
+            receved += 1024
+        print('got screenshot')
+    else:
+        print('Error')
 
 
 def handle_server_response(my_socket, cmd: str):
@@ -43,7 +61,7 @@ def handle_server_response(my_socket, cmd: str):
         if valid_message:
             print(server_response)
     else:
-        handle_server_response()
+        handle_send_photo(my_socket)
 
 
 def main():

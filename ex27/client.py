@@ -27,16 +27,23 @@ def get_client_request():
     return cmd.strip()
 
 
+def handle_send_photo():
+    pass
+
+
 def handle_server_response(my_socket, cmd: str):
     """
     Receive the response from the server and handle it, according to the request
     For example, DIR should result in printing the contents to the screen,
     Note- special attention should be given to SEND_PHOTO as it requires and extra receive
     """
-    valid_message, server_response = protocol.get_msg(my_socket)
     cmd = cmd.split(' ')[0]
-    if cmd == 'DIR' or cmd == 'DELETE' or cmd == 'COPY':
-        print(server_response)
+    if cmd != 'SEND_PHOTO':
+        valid_message, server_response = protocol.get_msg(my_socket)
+        if valid_message:
+            print(server_response)
+    else:
+        handle_server_response()
 
 
 def main():

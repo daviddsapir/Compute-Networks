@@ -4,6 +4,9 @@ import protocol
 import shutil
 import os
 from glob import glob
+import subprocess
+import pyautogui
+from PIL import Image
 
 # IP adder to connect to.
 IP = '127.0.0.1'
@@ -40,8 +43,6 @@ def check_client_request(request: str):
         request = request.split(' ')
         cmd = request[0]
 
-        if cmd == 'EXIT':
-            params.append(None)
         if cmd == 'DIR':
             if check_if_dir_exist(request[1]):
                 params.append(request[1])
@@ -59,10 +60,8 @@ def check_client_request(request: str):
                 params.append(request[2])
             else:
                 return False
-
-    # Then make sure the params are valid
-
-    # (6)
+        if cmd == 'EXECUTE':
+            params.append(request[1])
 
     return True, cmd, params
 
@@ -75,7 +74,6 @@ def handle_client_request(command: str, params: list):
 
     Returns:
         response: the requested data
-    
     """
 
     if command == 'DIR':
@@ -90,6 +88,22 @@ def handle_client_request(command: str, params: list):
     if command == 'COPY':
         shutil.copy(params[0], params[1])
         response = f'Copied {params[0]} to {params[1]}'
+    if command == 'EXECUTE':
+        try:
+            subprocess.call(params[0])
+            response = f'Executed {params[0]} successfully.'
+        except:
+            response = f'Cannot execute file {params[0]}.'
+
+    if command == 'TAKE_SCREENSHOT':
+        try:
+            myScreenshot = pyautogui.screenshot()
+            myScreenshot.save('./server_photos/screen_shot.png')
+            response = 'Took screenshot'
+        except:
+            response = 'Cannot take photo'
+
+
     return response
 
 
@@ -111,24 +125,26 @@ def main():
         # Checks if protocol is OK, e.g. length field OK
         valid_protocol, cmd = protocol.get_msg(client_socket)
         if valid_protocol:
+
             # Check if params are good, e.g. correct number of params, file name exists
             valid_cmd, command, params = check_client_request(cmd)
+
             if valid_cmd:
+
                 if command == 'EXIT':
                     break
-                # prepare a response using "handle_client_request"
-                response = handle_client_request(command, params)
 
-                # add length field using "create_msg"
-                packet = protocol.create_msg(response)
+                elif command == 'SEND_FILE':
+                    pass
+                else:
+                    # prepare a response using "handle_client_request"
+                    response = handle_client_request(command, params)
 
-                # send to client
-                client_socket.send(packet)
+                    # add length field using "create_msg"
+                    packet = protocol.create_msg(response)
 
-                # if command == 'SEND_FILE':
-                #     # Send the data itself to the client
-                #
-                #     # (9)
+                    # send to client
+                    client_socket.send(packet)
             else:
                 # prepare proper error to client
                 response = 'Bad command or parameters'

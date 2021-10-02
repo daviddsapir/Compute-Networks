@@ -23,7 +23,9 @@ def check_cmd(cmd: str):
 
     if command not in commands_list:
         return False
-    elif (command == 'DIR' or command == 'DELETE' or command == 'EXECUTE') and len(cmd) != 2:
+    elif command == 'TAKE_SCREENSHOT' and len(cmd) != 1:
+        return False
+    elif (command == 'DIR' or command == 'DELETE' or command == 'EXECUTE' or command == 'SEND_PHOTO') and len(cmd) != 2:
         return False
     elif command == 'COPY' and len(cmd) != 3:
         return False
